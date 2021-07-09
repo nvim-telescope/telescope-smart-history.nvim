@@ -16,10 +16,10 @@ It will be configured with the same keys as the normal history configuration.
 ```lua
 telescope.setup {
   defaults = {
-    history_location = '~/.local/share/nvim/databases/telescope_history.sqlite3',
-    -- For this history limit is sensitive to the context.
-    -- So limit 100 for picker `x` with cwd `y`
-    history_limit = 100,
+    history = {
+      path = '~/.local/share/nvim/databases/telescope_history.sqlite3',
+      limit = 100,
+    }
   }
 }
 

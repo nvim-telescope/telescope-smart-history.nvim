@@ -83,8 +83,10 @@ end
 
 return require('telescope').register_extension {
   setup = function(_, config)
-    config.history_handler = function()
-      return get_smart_history()
+    if config.history ~= false then
+      config.history.handler = function()
+        return get_smart_history()
+      end
     end
   end,
   exports = {
