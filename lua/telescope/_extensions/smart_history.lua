@@ -1,19 +1,25 @@
-local histories = require('telescope.actions.history')
+local histories = require "telescope.actions.history"
 
 local get_smart_history = function()
-  local has_sql, sql = pcall(require, 'sql')
-  if not has_sql then
-    print("Coundn't find sql.nvim. Using simple history")
+  local has_sqlite, sqlite = pcall(require, "sqlite")
+  if not has_sqlite then
+    if type(sqlite) ~= "string" then
+      print "Coundn't find sqlite.lua. Using simple history"
+    else
+      print("Found sqlite.lua: but got the following error: " .. sqlite)
+    end
     return histories.get_simple_history()
   end
 
   local ensure_content = function(self, picker, cwd)
-    if self._current_tbl then return end
+    if self._current_tbl then
+      return
+    end
     self._current_tbl = self.data:get {
       where = {
         picker = picker,
-        cwd = cwd
-      }
+        cwd = cwd,
+      },
     }
     self.content = {}
     for k, v in ipairs(self._current_tbl) do
@@ -22,18 +28,14 @@ local get_smart_history = function()
     self.index = #self.content + 1
   end
 
-  return histories.new({
+  return histories.new {
     init = function(obj)
-      obj.db = sql.new(obj.path)
-      obj.data = obj.db:table("history", {
-        nocache = true,
-        schema = {
-          content = "text",
-          picker = "text",
-          cwd = "text",
-          id = true,
-          ensure = true,
-        }
+      obj.db = sqlite.new(obj.path)
+      obj.data = obj.db:tbl("history", {
+        id = true,
+        content = "text",
+        picker = "text",
+        cwd = "text",
       })
 
       obj._current_tbl = nil
@@ -47,7 +49,7 @@ local get_smart_history = function()
       local title = picker.prompt_title
       local cwd = picker.cwd or vim.loop.cwd()
 
-      if line ~= '' then
+      if line ~= "" then
         ensure_content(self, title, cwd)
         if self.content[#self.content] ~= line then
           table.insert(self.content, line)
@@ -61,13 +63,9 @@ local get_smart_history = function()
                 table.insert(ids, self._current_tbl[i].id)
               end
             end
-            self.data:remove{ where = { id = ids } }
+            self.data:remove { id = ids }
           end
-          self.data:insert {
-            content = line,
-            picker = title,
-            cwd = cwd
-          }
+          self.data:insert { content = line, picker = title, cwd = cwd }
         end
       end
       if not no_reset then
@@ -77,11 +75,11 @@ local get_smart_history = function()
     pre_get = function(self, _, picker)
       local cwd = picker.cwd or vim.loop.cwd()
       ensure_content(self, picker.prompt_title, cwd)
-    end
-  })
+    end,
+  }
 end
 
-return require('telescope').register_extension {
+return require("telescope").register_extension {
   setup = function(_, config)
     if config.history ~= false then
       config.history.handler = function()
@@ -92,6 +90,6 @@ return require('telescope').register_extension {
   exports = {
     smart_history = function()
       return get_smart_history()
-    end
-  }
+    end,
+  },
 }
