@@ -1,5 +1,13 @@
 local histories = require "telescope.actions.history"
 
+local escape = function(content) 
+  return string.format("__ESCAPED__'%s'", content)
+end
+
+local unescape = function(content)
+  return content:gsub("^__ESCAPED__\'(.*)\'$", "%1")
+end
+
 local get_smart_history = function()
   local has_sqlite, sqlite = pcall(require, "sqlite")
   if not has_sqlite then
@@ -23,7 +31,7 @@ local get_smart_history = function()
     }
     self.content = {}
     for k, v in ipairs(self._current_tbl) do
-      self.content[k] = v.content
+      self.content[k] = unescape(v.content)
     end
     self.index = #self.content + 1
   end
@@ -65,7 +73,7 @@ local get_smart_history = function()
             end
             self.data:remove { id = ids }
           end
-          self.data:insert { content = line, picker = title, cwd = cwd }
+          self.data:insert { content = escape(line), picker = title, cwd = cwd }
         end
       end
       if not no_reset then
